@@ -5,4 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 
 interface PointsRepo: JpaRepository<Points, Long> {
 
+    fun findAllByOrderByTimestamp(): List<Points>
+
 }

@@ -11,7 +11,7 @@ class Points (
     val payer: String,
 
     @Column(name = "points")
-    val points: Int,
+    var points: Int,
 
     @Column(name = "timestamp")
     val timestamp: LocalDateTime
