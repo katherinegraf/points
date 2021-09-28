@@ -22,11 +22,7 @@ class PointsController {
         val pointsBalance = mutableMapOf<String, Int>()
         val activePoints = pointsRepo.findAll()
         activePoints.forEach{
-            if (it.payer !in pointsBalance.keys) {
-                pointsBalance[it.payer] = it.points
-            } else {
-                pointsBalance[it.payer] = it.points + pointsBalance.getValue(it.payer)
-            }
+            pointsBalance[it.payer] = it.points + pointsBalance.getOrDefault(it.payer, 0)
         }
         return ResponseEntity(pointsBalance, HttpStatus.OK)
     }
@@ -41,38 +37,60 @@ class PointsController {
             timestamp = transaction.timestamp
         )
         pointsRepo.save(newTransaction)
-        return ResponseEntity(transaction, HttpStatus.CREATED)
+        return ResponseEntity(newTransaction, HttpStatus.CREATED)
     }
 
     @PatchMapping("/spendPoints")
     fun spendPoints(
-        @RequestBody pointRequest: Map<String, Int>
-    ): ResponseEntity<MutableList<SpentPoints>> {
-        var pointsToSpend: Int = pointRequest.getValue("points")
+        @RequestBody request: Map<String, Int>
+    ): ResponseEntity<List<SpentPoints>> {
+        val pointsToSpend: Int = request.getValue("points")
+        return if (!canRequestBeFilled(pointsToSpend)) {
+            ResponseEntity(HttpStatus.UNPROCESSABLE_ENTITY)
+        } else {
+            val pointsDeducted = fulfillSpendRequest(pointsToSpend)
+            val spentPointsSummary = convertMapToListOfSpentPoints(pointsDeducted)
+            ResponseEntity(spentPointsSummary, HttpStatus.OK)
+        }
+    }
+
+    fun canRequestBeFilled(request: Int): Boolean {
+        return (request < pointsRepo.fetchTotalPoints())
+    }
+
+    fun fulfillSpendRequest(request: Int): Map<String, Int> {
+        var pointsToSpend = request
         val availablePoints = pointsRepo.findAllByOrderByTimestamp()
-        val spentPoints = mutableListOf<SpentPoints>()
+        val pointsDeducted = mutableMapOf<String, Int>()
         availablePoints.forEach {
             if (pointsToSpend > 0 && it.points > pointsToSpend) {
-                spentPoints.add(
-                    SpentPoints(
-                    payer = it.payer,
-                    points = pointsToSpend * -1
-                ))
+                pointsDeducted[it.payer] =
+                    pointsToSpend * -1 + pointsDeducted.getOrDefault(it.payer, 0)
                 it.points -= pointsToSpend
                 pointsRepo.save(it)
                 pointsToSpend = 0
             } else if (pointsToSpend > 0){
-                spentPoints.add(
-                    SpentPoints(
-                        payer = it.payer,
-                        points = it.points * -1
-                    ))
+                pointsDeducted[it.payer] =
+                    it.points * -1 + pointsDeducted.getOrDefault(it.payer, 0)
                 pointsToSpend -= it.points
                 it.points = 0
                 pointsRepo.save(it)
             }
         }
-        return ResponseEntity(spentPoints, HttpStatus.OK)
+        return pointsDeducted
+    }
+
+    fun convertMapToListOfSpentPoints(pointsDeducted: Map<String,Int>): List<SpentPoints> {
+        val listToReturn = mutableListOf<SpentPoints>()
+        pointsDeducted.forEach {
+            listToReturn.add(
+                SpentPoints(
+                    payer = it.key,
+                    points = it.value
+                )
+            )
+        }
+        return listToReturn
     }
 
 }
