@@ -7,8 +7,3 @@ spring:
     url: jdbc:postgresql://localhost:5432/points_test
     username: postgres
     password: goosegoose
-
-#// "run this SQL in yr db;"
-#// give them sql statements to create the table (2x: once for real, once for test
-#// would have used migrations in real life but since they didn't expect _
-#// me to use a db for the test i was already spending too much time with the db
