@@ -1,5 +1,4 @@
-# Points
-### Fetch Rewards Points Take Home Test
+# Rewards Points
 
 This app is built with Spring Boot, Gradle, and Kotlin, and connects to Postgres databases running on port 5432.
 ___
