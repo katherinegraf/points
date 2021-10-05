@@ -55,7 +55,7 @@ class PointsController {
     }
 
     fun canRequestBeFilled(request: Int): Boolean {
-        return (request < pointsRepo.fetchTotalPoints())
+        return (request <= pointsRepo.fetchTotalPoints())
     }
 
     fun fulfillSpendRequest(request: Int): Map<String, Int> {

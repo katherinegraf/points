@@ -67,7 +67,6 @@ class PointsControllerTests {
     @Order(4)
     fun fulfillSpendRequest_Test() {
         val result = pointsController.fulfillSpendRequest(1000)
-        logger.info(result.toString())
         assert(result["Frito-Lay"] == -850)
         assert(result["Charmin"] == -100)
         assert(result["Tillamook"] == -50)
